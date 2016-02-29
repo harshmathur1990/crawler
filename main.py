@@ -24,6 +24,7 @@ def get_effective_end_point(end_point):
 
 def parent_and_run_child_urls(url, depth, max_depth):
     try:
+        url_visited[url] = True
         opened_url = urlopen(url)
         url_insert = urls.insert()\
             .values(url=url, code=u'200')
@@ -40,7 +41,7 @@ def parent_and_run_child_urls(url, depth, max_depth):
         child_depth = int(depth) + int(1)
         print child_depth
         for link in links:
-            if not depth > max_depth and not len(url_visited.keys()) > 10000:
+            if depth <= max_depth and len(url_visited.keys()) < 10000:
                 end_point = link.get('href')
                 effective_end_point = get_effective_end_point(end_point)
                 if effective_end_point and effective_end_point.startswith('/'):
@@ -51,6 +52,7 @@ def parent_and_run_child_urls(url, depth, max_depth):
                 else:
                     child_url = effective_end_point
                 if child_url and not url_visited.get(child_url, False):
+                    print "parent: ", url, "    child: ", child_url
                     threads.append(gevent.spawn(parent_and_run_child_urls, child_url, child_depth, max_depth))
             else:
                 pass
@@ -79,6 +81,7 @@ def new_dfs_based_crawling():
     max_depth = 3
     threads = list()
     threads.append(gevent.spawn(parent_and_run_child_urls, url, depth, max_depth))
+    url_visited[url] = True
     gevent.joinall(threads)
     return "Hello World!"
 
